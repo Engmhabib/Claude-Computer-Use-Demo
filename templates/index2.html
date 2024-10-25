@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Claude Computer Use Demo</title>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600&display=swap" rel="stylesheet">
+    <!-- Favicon -->
+    <link rel="icon" href="favicon.ico">
+    <!-- Main Stylesheet -->
+    <style>
+        /* Global Styles */
+        body {
+            font-family: 'Nunito', sans-serif;
+            background-color: #f4f6f8;
+            color: #333;
+            margin: 0;
+            padding: 0;
+        }
+        /* Header Styles */
+        header {
+            background-color: #4b8bf5;
+            padding: 20px;
+            text-align: center;
+            color: #fff;
+        }
+        header h1 {
+            margin: 0;
+            font-weight: 600;
+        }
+        /* Chat Container */
+        #chatbox {
+            width: 100%;
+            max-width: 900px;
+            margin: 0 auto;
+            display: flex;
+            flex-direction: column;
+            height: calc(100vh - 80px);
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            background-color: #fff;
+        }
+        /* Messages Area */
+        #messages {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+            background-color: #eef1f5;
+        }
+        /* Message Styles */
+        .message {
+            display: flex;
+            margin-bottom: 20px;
+            align-items: flex-start;
+        }
+        .message.user {
+            flex-direction: row-reverse;
+        }
+        .message.assistant {
+            flex-direction: row;
+        }
+        .message .avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background-color: #ccc;
+            margin: 0 10px;
+            overflow: hidden;
+        }
+        .message .avatar img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        .message-content {
+            max-width: 70%;
+            padding: 15px;
+            border-radius: 15px;
+            background-color: #fff;
+            position: relative;
+            word-wrap: break-word;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        .message.user .message-content {
+            background-color: #daf1da;
+            border-bottom-right-radius: 0;
+        }
+        .message.assistant .message-content {
+            background-color: #fff;
+            border-bottom-left-radius: 0;
+        }
+        /* Input Area */
+        #input-area {
+            padding: 15px;
+            background-color: #fff;
+            border-top: 1px solid #e0e0e0;
+            display: flex;
+            align-items: center;
+        }
+        #user-input {
+            flex: 1;
+            padding: 12px 15px;
+            border: 1px solid #ccc;
+            border-radius: 25px;
+            font-size: 1em;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+        #user-input:focus {
+            border-color: #4b8bf5;
+        }
+        #send-btn {
+            margin-left: 10px;
+            padding: 12px 20px;
+            border: none;
+            background-color: #4b8bf5;
+            color: #fff;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 1em;
+            transition: background-color 0.2s;
+        }
+        #send-btn:hover {
+            background-color: #3a73d9;
+        }
+        /* Scrollbar Styles */
+        #messages::-webkit-scrollbar {
+            width: 8px;
+        }
+        #messages::-webkit-scrollbar-thumb {
+            background-color: rgba(0, 0, 0, 0.2);
+            border-radius: 4px;
+        }
+        /* Responsive Design */
+        @media (max-width: 600px) {
+            #chatbox {
+                height: calc(100vh - 60px);
+            }
+            .message-content {
+                max-width: 85%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header>
+        <h1>Claude Computer Use Demo</h1>
+    </header>
+
+    <!-- Chatbox -->
+    <div id="chatbox">
+        <!-- Messages Area -->
+        <div id="messages"></div>
+        <!-- Input Area -->
+        <form id="chat-form">
+            <div id="input-area">
+                <input type="text" id="user-input" placeholder="Type your message..." autocomplete="off" required>
+                <button type="submit" id="send-btn">Send</button>
+            </div>
+        </form>
+    </div>
+
+    <!-- JavaScript -->
+    <script>
+        const messagesDiv = document.getElementById('messages');
+        const chatForm = document.getElementById('chat-form');
+        const userInput = document.getElementById('user-input');
+        let conversationId = '';
+
+        chatForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            const userText = userInput.value.trim();
+            if (userText === '') return;
+            addMessage('You', userText, 'user');
+            userInput.value = '';
+            scrollToBottom();
+
+            const formData = new FormData();
+            formData.append('prompt', userText);
+            if (conversationId) {
+                formData.append('conversation_id', conversationId);
+            }
+
+            fetch('/chat', {
+                method: 'POST',
+                body: formData,
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.response) {
+                    conversationId = data.conversation_id;
+                    addMessage('Claude', data.response, 'assistant');
+                    scrollToBottom();
+                } else {
+                    addMessage('Error', 'An error occurred.', 'assistant');
+                }
+            });
+        });
+
+        function addMessage(sender, text, className) {
+            const messageDiv = document.createElement('div');
+            messageDiv.classList.add('message', className);
+
+            // Avatar
+            const avatarDiv = document.createElement('div');
+            avatarDiv.classList.add('avatar');
+            const avatarImg = document.createElement('img');
+            avatarImg.src = className === 'user'
+                ? 'https://i.ibb.co/ZYW3VTp/brown-profile.png' // User avatar image URL
+                : 'https://i.ibb.co/6vSc9Qk/claude-avatar.png';  // Claude avatar image URL
+            avatarImg.alt = sender + ' Avatar';
+            avatarDiv.appendChild(avatarImg);
+
+            // Message Content
+            const messageContent = document.createElement('div');
+            messageContent.classList.add('message-content');
+            messageContent.innerHTML = text;
+
+            if (className === 'user') {
+                messageDiv.appendChild(messageContent);
+                messageDiv.appendChild(avatarDiv);
+            } else {
+                messageDiv.appendChild(avatarDiv);
+                messageDiv.appendChild(messageContent);
+            }
+
+            messagesDiv.appendChild(messageDiv);
+        }
+
+        function scrollToBottom() {
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+        }
+    </script>
+</body>
+</html>
