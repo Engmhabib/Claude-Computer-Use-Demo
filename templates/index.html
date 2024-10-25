@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Claude Computer Use Demo</title>
+    <style>
+        body { font-family: Arial, sans-serif; background-color: #f5f5f5; }
+        #chatbox { width: 80%; margin: 20px auto; background-color: #fff; border-radius: 5px; box-shadow: 0 0 10px rgba(0, 0, 0, 0.1); }
+        #messages { padding: 20px; height: 500px; overflow-y: scroll; }
+        #user-input { width: 90%; padding: 10px; margin: 10px; border-radius: 5px; border: 1px solid #ccc; }
+        #send-btn { padding: 10px 20px; border: none; background-color: #007BFF; color: #fff; border-radius: 5px; cursor: pointer; }
+        #send-btn:hover { background-color: #0056b3; }
+        .message { margin: 10px 0; }
+        .user { color: #007BFF; text-align: right; }
+        .assistant { color: #28a745; text-align: left; }
+        .timestamp { font-size: 0.8em; color: #999; }
+        .message-content { display: inline-block; max-width: 70%; word-wrap: break-word; padding: 10px; border-radius: 10px; }
+        .user .message-content { background-color: #e9f5ff; }
+        .assistant .message-content { background-color: #e9ffe9; }
+    </style>
+</head>
+<body>
+    <h1 style="text-align: center;">Claude Computer Use Demo</h1>
+    <div id="chatbox">
+        <div id="messages"></div>
+        <form id="chat-form">
+            <input type="text" id="user-input" placeholder="Enter your prompt here..." autocomplete="off" required>
+            <button type="submit" id="send-btn">Send</button>
+        </form>
+    </div>
+    <script>
+        const messagesDiv = document.getElementById('messages');
+        const chatForm = document.getElementById('chat-form');
+        const userInput = document.getElementById('user-input');
+        let conversationId = '';
+
+        chatForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            const userText = userInput.value.trim();
+            if (userText === '') return;
+            addMessage('You', userText, 'user');
+            userInput.value = '';
+            scrollToBottom();
+
+            const formData = new FormData();
+            formData.append('prompt', userText);
+            if (conversationId) {
+                formData.append('conversation_id', conversationId);
+            }
+
+            fetch('/chat', {
+                method: 'POST',
+                body: formData,
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.response) {
+                    conversationId = data.conversation_id;
+                    addMessage('Claude', data.response, 'assistant');
+                    scrollToBottom();
+                } else {
+                    addMessage('Error', 'An error occurred.', 'assistant');
+                }
+            });
+        });
+
+        function addMessage(sender, text, className) {
+            const messageDiv = document.createElement('div');
+            messageDiv.classList.add('message', className);
+            const messageContent = document.createElement('div');
+            messageContent.classList.add('message-content');
+            messageContent.innerHTML = `<strong>${sender}:</strong><br>${text}`;
+            const timestamp = document.createElement('div');
+            timestamp.classList.add('timestamp');
+            timestamp.innerText = new Date().toLocaleTimeString();
+            messageDiv.appendChild(messageContent);
+            messageDiv.appendChild(timestamp);
+            messagesDiv.appendChild(messageDiv);
+        }
+
+        function scrollToBottom() {
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+        }
+    </script>
+</body>
+</html>
