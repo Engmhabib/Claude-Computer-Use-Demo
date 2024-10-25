@@ -43,7 +43,6 @@ TOOLS = [
     }
 ]
 
-# Global variable to store conversation history
 conversation_history = {}
 
 @app.route('/', methods=['GET'])
