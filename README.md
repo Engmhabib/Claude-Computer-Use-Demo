@@ -283,6 +283,6 @@ This project is based on integrating Anthropic's Claude 3.5 Sonnet with a Flask 
 
 ---
 
-**Contact**: For any questions or issues regarding this project, please open an issue on GitHub or reach out to the project maintainer.
+**Contact**: For any questions or issues regarding this project, please open an issue on GitHub or reach out.
 
 ---
